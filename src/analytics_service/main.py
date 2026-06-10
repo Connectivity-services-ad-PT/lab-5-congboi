@@ -9,8 +9,8 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 # Đọc biến môi trường với giá trị mặc định
-SERVICE_NAME = os.getenv("SERVICE_NAME", "iot-ingestion")
-SERVICE_VERSION = os.getenv("SERVICE_VERSION", "0.5.0")
+SERVICE_NAME = os.getenv("SERVICE_NAME", "team-analytics")
+SERVICE_VERSION = os.getenv("SERVICE_VERSION", "0.6.0")
 AUTH_TOKEN = os.getenv("AUTH_TOKEN", "local-dev-token")
 AI_SERVICE_URL = os.getenv("AI_SERVICE_URL", "http://ai-service:9000")
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://lab05:lab05pass@db:5432/iotdb")
@@ -23,11 +23,11 @@ logger = logging.getLogger(__name__)
 
 
 app = FastAPI(
-    title="FIT4110 Lab 05 - IoT Ingestion Service",
+    title="FIT4110 Lab 05 - Team Analytics Service",
     version=SERVICE_VERSION,
     description=(
-        "IoT Ingestion API chạy trong ngữ cảnh Docker Compose cho Lab 05. "
-        "Luồng logic được kế thừa từ Lab 04 và tiếp tục được dùng để kiểm thử end‑to‑end."
+        "Dịch vụ phân tích dữ liệu Smart Campus kết nối với TimescaleDB/PostgreSQL. "
+        "Dữ liệu được tổng hợp từ các cảm biến IoT để cung cấp cái nhìn tổng quan về hệ thống."
     ),
 )
 
