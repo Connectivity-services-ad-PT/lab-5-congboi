@@ -1,0 +1,29 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+.env
+
+# Docker
+.docker_db_data/
+
+# IDEs
+.vscode/
+.idea/
+
+# Lab Reports (if you don't want to commit results)
+reports/*.html
+reports/*.xml
+
+# macOS
+.DS_Store

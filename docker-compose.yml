@@ -46,16 +46,14 @@ services:
 
   # AI service mẫu dùng Python HTTP server hoặc FastAPI
   ai-service:
-    image: python:3.11-slim
+    build:
+      context: ./src/ai_service
+      dockerfile: Dockerfile.ai
     container_name: fit4110-ai-lab05
-    working_dir: /service
-    volumes:
-      - ./src/ai_service:/service
-    command: ["python", "main.py"]
     networks:
       - team-internal
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import requests; import sys; sys.exit(0) if requests.get('http://localhost:9000/health').status_code == 200 else sys.exit(1)\""]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9000/health', timeout=3).read()"]
       interval: 30s
       timeout: 5s
       retries: 3

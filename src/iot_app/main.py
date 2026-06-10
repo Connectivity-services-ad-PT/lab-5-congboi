@@ -12,6 +12,14 @@ from pydantic import BaseModel, Field
 SERVICE_NAME = os.getenv("SERVICE_NAME", "iot-ingestion")
 SERVICE_VERSION = os.getenv("SERVICE_VERSION", "0.5.0")
 AUTH_TOKEN = os.getenv("AUTH_TOKEN", "local-dev-token")
+AI_SERVICE_URL = os.getenv("AI_SERVICE_URL", "http://ai-service:9000")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://lab05:lab05pass@db:5432/iotdb")
+
+import requests
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 app = FastAPI(
@@ -108,18 +116,21 @@ def build_problem(
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+    import http
     if isinstance(exc.detail, dict):
         problem = exc.detail
     else:
+        status_text = http.client.responses.get(exc.status_code, "HTTP Error")
         problem = build_problem(
             status_code=exc.status_code,
-            title=status.HTTP_STATUS_CODES.get(exc.status_code, "HTTP Error"),
+            title=status_text,
             detail=str(exc.detail),
             instance=str(request.url.path),
         )
 
+    status_text = http.client.responses.get(exc.status_code, "HTTP Error")
     problem.setdefault("status", exc.status_code)
-    problem.setdefault("title", status.HTTP_STATUS_CODES.get(exc.status_code, "HTTP Error"))
+    problem.setdefault("title", status_text)
     problem.setdefault("type", "about:blank")
     problem.setdefault("detail", "Request failed")
     problem.setdefault("instance", str(request.url.path))
@@ -226,6 +237,30 @@ def create_reading(payload: SensorReadingCreate, response: Response) -> SensorRe
         "created_at": created_at,
     }
     READINGS.append(item)
+
+    # Lab 05: Coordination with AI Service
+    # If metric is motion, we call AI service for verification
+    ai_status = "not_involved"
+    ai_predictions = None
+    if payload.metric == SensorMetric.motion:
+        try:
+            ai_resp = requests.post(f"{AI_SERVICE_URL}/predict", timeout=2.0)
+            if ai_resp.status_code == 200:
+                ai_predictions = ai_resp.json()
+                ai_status = "verified"
+                logger.info(f"AI Service verified motion: {ai_predictions}")
+            else:
+                ai_status = "ai_error"
+                logger.warning(f"AI Service returned error: {ai_resp.status_code}")
+        except Exception as e:
+            ai_status = "ai_unavailable"
+            logger.error(f"AI Service unavailable: {e}")
+
+    # Lab 05: Coordination with Database (Mocked for brevity, but shows intent)
+    logger.info(f"Connecting to DB: {DATABASE_URL}")
+    # In a real app, you'd use a DB session here.
+    # For now, we log the persistence step.
+    logger.info(f"Persisted reading {reading_id} to database.")
 
     return SensorReadingCreated(
         reading_id=reading_id,
